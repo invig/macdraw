@@ -32,6 +32,7 @@
 		4F0BA8AE05096C14F9249FDA /* SceneRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6DD758E8E75B6152E409FEB /* SceneRenderer.swift */; };
 		5E236FE5E1C24EA0F6B90A98 /* ExcalidrawDocument.swift in Sources */ = {isa = PBXBuildFile; fileRef = E760B0D4AD882D6B77605565 /* ExcalidrawDocument.swift */; };
 		63C905D24858F7317CCC8D48 /* BundleSchemeHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D44B290EDF612260C9BA6AA /* BundleSchemeHandler.swift */; };
+		7237A2D10928330629FAF84E /* LibraryImporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF8BE369B2ACFA5D79FA5423 /* LibraryImporter.swift */; };
 		898894B3CD36F7F9CA717155 /* PreviewProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62FEAD308F2920E0B56F6C9E /* PreviewProvider.swift */; };
 		98D455E706194F2E7B5FDBEC /* MainMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE6872BF56AE63EAE05EED5C /* MainMenu.swift */; };
 		9DD369E000AC4598747495F9 /* BundleSchemeHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D44B290EDF612260C9BA6AA /* BundleSchemeHandler.swift */; };
@@ -114,6 +115,7 @@
 		AC82C40ECEDF8537FBA37DED /* Thumbnail.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Thumbnail.entitlements; sourceTree = "<group>"; };
 		ACEEC5700AAB1B9FB02CBB21 /* MacDrawPreview.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = MacDrawPreview.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF5A23EF00FA2865221CD40F /* QuickLookThumbnailing.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuickLookThumbnailing.framework; path = System/Library/Frameworks/QuickLookThumbnailing.framework; sourceTree = SDKROOT; };
+		CF8BE369B2ACFA5D79FA5423 /* LibraryImporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryImporter.swift; sourceTree = "<group>"; };
 		DE6872BF56AE63EAE05EED5C /* MainMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainMenu.swift; sourceTree = "<group>"; };
 		E760B0D4AD882D6B77605565 /* ExcalidrawDocument.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExcalidrawDocument.swift; sourceTree = "<group>"; };
 		EB80D77086CB89DF60E7A44A /* ThumbnailProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThumbnailProvider.swift; sourceTree = "<group>"; };
@@ -154,6 +156,7 @@
 				F13055452FC76DE0E1BD6D3E /* EditorViewController.swift */,
 				E760B0D4AD882D6B77605565 /* ExcalidrawDocument.swift */,
 				F6FAFCF3A2968231748F05B7 /* ExportPanel.swift */,
+				CF8BE369B2ACFA5D79FA5423 /* LibraryImporter.swift */,
 				60551381205FD488D0EA7D69 /* LibraryStore.swift */,
 				DE6872BF56AE63EAE05EED5C /* MainMenu.swift */,
 			);
@@ -474,6 +477,7 @@
 				07DB5DF68E6122021801030E /* EditorViewController.swift in Sources */,
 				5E236FE5E1C24EA0F6B90A98 /* ExcalidrawDocument.swift in Sources */,
 				A04EBD815DEE3D183EDB7655 /* ExportPanel.swift in Sources */,
+				7237A2D10928330629FAF84E /* LibraryImporter.swift in Sources */,
 				FABDFA3E4EDD76116CCB053D /* LibraryStore.swift in Sources */,
 				98D455E706194F2E7B5FDBEC /* MainMenu.swift in Sources */,
 			);

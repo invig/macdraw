@@ -5,6 +5,7 @@ import {
   exportToSvg,
   getNonDeletedElements,
   getSceneVersion,
+  MainMenu,
   restore,
   restoreLibraryItems,
   serializeAsJSON,
@@ -32,6 +33,10 @@ declare global {
       exportInfo: () => { isEmpty: boolean; hasSelection: boolean };
       /** File > Export: PNG comes back base64-encoded, SVG as text. */
       exportImage: (opts: ExportOptions) => Promise<string>;
+      /** "Add to Excalidraw" from libraries.excalidraw.com: merge a fetched .excalidrawlib (asks first). */
+      importLibrary: (libraryJSON: string) => Promise<"added" | "cancelled">;
+      /** Another window changed the shared library: replace ours without echoing it back. */
+      setLibrary: (libraryJSON: string) => Promise<void>;
       /** Native menu Undo/Redo. */
       undo: () => void;
       redo: () => void;
@@ -79,6 +84,7 @@ export default function App() {
   const lastBg = useRef<string | null>(null);
   const loaded = useRef(false);
   const serializeTimer = useRef<number | undefined>(undefined);
+  const applyingRemoteLibrary = useRef(false);
 
   const serialize = () => {
     const api = apiRef.current;
@@ -162,6 +168,37 @@ export default function App() {
         }
         return btoa(binary);
       },
+      importLibrary: async (libraryJSON) => {
+        const api = apiRef.current;
+        if (!api) throw new Error("Editor not ready");
+        try {
+          await api.updateLibrary({
+            libraryItems: new Blob([libraryJSON], { type: "application/vnd.excalidrawlib+json" }),
+            merge: true,
+            prompt: true,
+            openLibraryMenu: true,
+            defaultStatus: "published",
+          });
+          return "added";
+        } catch (e) {
+          if ((e as { name?: string } | null)?.name === "AbortError") return "cancelled";  // user said no
+          throw e;
+        }
+      },
+      setLibrary: async (libraryJSON) => {
+        const api = apiRef.current;
+        if (!api) return;
+        const lib = JSON.parse(libraryJSON);
+        applyingRemoteLibrary.current = true;
+        try {
+          await api.updateLibrary({
+            libraryItems: restoreLibraryItems(lib.libraryItems ?? lib.library ?? [], "unpublished"),
+            merge: false,
+          });
+        } finally {
+          window.setTimeout(() => (applyingRemoteLibrary.current = false), 0);
+        }
+      },
       undo: () => editingText() ? document.execCommand("undo") : sendKey("z", false),
       redo: () => editingText() ? document.execCommand("redo") : sendKey("z", true),
     };
@@ -189,7 +226,7 @@ export default function App() {
   };
 
   const onLibraryChange = (items: LibraryItems) => {
-    if (!loaded.current) return;
+    if (!loaded.current || applyingRemoteLibrary.current) return;
     post({ type: "library", json: serializeLibraryAsJSON(items) });
   };
 
@@ -229,7 +266,18 @@ export default function App() {
         UIOptions={uiOptions}
         autoFocus
         handleKeyboardGlobally
-      />
+      >
+        {/* Excalidraw's default menu minus "Excalidraw links" (and the web-only file items). */}
+        <MainMenu>
+          <MainMenu.DefaultItems.SaveAsImage />
+          <MainMenu.DefaultItems.SearchMenu />
+          <MainMenu.DefaultItems.Help />
+          <MainMenu.DefaultItems.ClearCanvas />
+          <MainMenu.Separator />
+          <MainMenu.DefaultItems.ToggleTheme />
+          <MainMenu.DefaultItems.ChangeCanvasBackground />
+        </MainMenu>
+      </Excalidraw>
     </div>
   );
 }

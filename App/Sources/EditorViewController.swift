@@ -7,6 +7,10 @@ final class EditorViewController: NSViewController {
     private var webView: EditorWebView!
     /// True once the page has received the document contents.
     private(set) var isReady = false
+    /// Libraries to import once the page is ready (a link can arrive before the editor loads).
+    private var pendingLibraryImports: [String] = []
+
+    static let libraryDidChange = Notification.Name("MacDrawLibraryDidChange")
 
     init(document: ExcalidrawDocument) {
         self.document = document
@@ -34,6 +38,8 @@ final class EditorViewController: NSViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         webView.load(URLRequest(url: BundleSchemeHandler.startURL))
+        NotificationCenter.default.addObserver(self, selector: #selector(libraryChangedElsewhere(_:)),
+                                               name: Self.libraryDidChange, object: nil)
     }
 
     override func viewDidAppear() {
@@ -50,8 +56,33 @@ final class EditorViewController: NSViewController {
                                     arguments: ["scene": scene, "library": library],
                                     in: nil, in: .page) { [weak self] result in
             if case .failure(let error) = result { NSLog("MacDraw: load failed: \(error)") }
-            self?.isReady = true
+            guard let self else { return }
+            self.isReady = true
+            let pending = self.pendingLibraryImports
+            self.pendingLibraryImports.removeAll()
+            pending.forEach(self.importLibrary)
         }
+    }
+
+    /// Merges a downloaded .excalidrawlib into the library; Excalidraw asks the user first.
+    func importLibrary(_ json: String) {
+        guard isReady else { return pendingLibraryImports.append(json) }
+        webView.callAsyncJavaScript("return await window.macdraw.importLibrary(json)", arguments: ["json": json],
+                                    in: nil, in: .page) { [weak self] result in
+            guard case .failure(let error) = result, let self else { return }
+            NSLog("MacDraw: library import failed: \(error)")
+            let alert = NSAlert()
+            alert.messageText = "Couldn't add the library"
+            alert.informativeText = error.localizedDescription
+            if let window = self.view.window { alert.beginSheetModal(for: window) } else { alert.runModal() }
+        }
+    }
+
+    /// The shared library changed in another window: show the same items here.
+    @objc private func libraryChangedElsewhere(_ note: Notification) {
+        guard (note.object as AnyObject?) !== self, isReady, let json = note.userInfo?["json"] as? String else { return }
+        webView.callAsyncJavaScript("await window.macdraw.setLibrary(json)", arguments: ["json": json],
+                                    in: nil, in: .page, completionHandler: nil)
     }
 
     /// Called after Revert / Browse Versions replaced the document's contents.
@@ -155,7 +186,9 @@ extension EditorViewController: WKScriptMessageHandler {
         case "scene":
             if let json = body["json"] as? String { document?.editorDidSerialize(json) }
         case "library":
-            if let json = body["json"] as? String { LibraryStore.save(json) }
+            if let json = body["json"] as? String, LibraryStore.save(json) {
+                NotificationCenter.default.post(name: Self.libraryDidChange, object: self, userInfo: ["json": json])
+            }
         case "log":
             NSLog("MacDraw[web]: \(body["message"] ?? "")")
         default:

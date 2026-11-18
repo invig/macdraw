@@ -1,0 +1,4 @@
+/* Hide Excalidraw's web links in the Help dialog (docs, blog, issues, YouTube) — not relevant in the app. */
+.excalidraw .HelpDialog__header {
+  display: none;
+}

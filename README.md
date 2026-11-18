@@ -1,69 +1,47 @@
 # MacDraw
 
-A native macOS document app for `.excalidraw` files. The editor is
-[Excalidraw](https://github.com/excalidraw/excalidraw) (the `@excalidraw/excalidraw` package, MIT)
-running in a WKWebView; everything to do with files is AppKit's `NSDocument`.
+A native Mac app for [Excalidraw](https://excalidraw.com) drawings.
 
-- Open, Save, Duplicate, Rename, Move To, Revert / Browse All Versions, autosave, Open Recent, tabs
-- Double-click `.excalidraw` files in Finder
-- File → Export as PNG… (⌥⌘E) / SVG… with scale, background, dark mode, embed-scene and selection-only options
-- Quick Look: Space-bar previews and Finder thumbnails rendered by Excalidraw itself
-- Works offline (fonts and editor are bundled)
+Excalidraw's hand-drawn whiteboard, but your `.excalidraw` files live on your disk like any other
+document: double-click to open, ⌘S to save, autosave, version history, tabs, and Quick Look in Finder.
+No account, no browser, works offline.
 
-## Install a release
+## Features
 
-Download `MacDraw-<version>.zip` from [Releases](https://github.com/invig/macdraw/releases), unzip, and move
-`MacDraw.app` to Applications.
+- Opens and saves standard `.excalidraw` files, compatible with excalidraw.com, Obsidian and other tools
+- Autosave, Versions (File → Revert To), Open Recent, Duplicate, Rename, Move To, window tabs
+- Export to PNG or SVG (⌥⌘E) with scale, background, dark mode and "embed scene" options
+- Quick Look: press Space on a drawing in Finder to preview it; Finder thumbnails
+- Shape libraries, including one-click "Add to Excalidraw" from [libraries.excalidraw.com](https://libraries.excalidraw.com)
+- Apple silicon and Intel, macOS 14 or later
 
-Releases are **not notarized**, so macOS blocks the first launch. Either open it once, then go to
-System Settings → Privacy & Security and click **Open Anyway**, or run:
+## Install
 
-```bash
-xattr -dr com.apple.quarantine /Applications/MacDraw.app
-```
+Download the latest `MacDraw-<version>.zip` from [Releases](https://github.com/invig/macdraw/releases),
+unzip it and drag **MacDraw** to Applications.
 
-Quick Look extensions may start switched off: System Settings → General → Login Items & Extensions →
-Quick Look → enable **MacDraw Thumbnails** and **MacDraw Preview**. Thumbnails can take a log out/in
-to appear.
+If Quick Look doesn't show your drawings, turn on **MacDraw Thumbnails** and **MacDraw Preview** in
+System Settings → General → Login Items & Extensions → Quick Look.
 
-## Build
+## Build from source
 
-Needs Xcode, Node and [XcodeGen](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`).
+Needs Xcode, Node.js and [XcodeGen](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`).
 
 ```bash
 xcodegen generate
-open MacDraw.xcodeproj      # ⌘R
+open MacDraw.xcodeproj
 ```
 
-The build runs `scripts/build-web.sh` (Vite build of `web/`, skipped when nothing changed) and copies
-the bundle into the app and both Quick Look extensions.
+Then press ⌘R. To make a release zip, run `scripts/release.sh`.
 
-Release zip (universal, ad-hoc signed): `scripts/release.sh` → `build/release/MacDraw-<version>.zip`.
-The version comes from `MARKETING_VERSION` in `project.yml`.
+## How it works
 
-## Layout
+The editor is the official [`@excalidraw/excalidraw`](https://www.npmjs.com/package/@excalidraw/excalidraw)
+component running in a WebKit view (`web/`). Everything around it is native AppKit (`App/`): the app is an
+`NSDocument` app, so files, saving and versions are handled by macOS itself. The Quick Look extensions
+(`QuickLook/`) render drawings with Excalidraw's own exporter, so previews look exactly like the app.
 
-| Path | What |
-|---|---|
-| `web/src/App.tsx` | Excalidraw + the JS side of the bridge (`window.macdraw`) |
-| `web/src/render.ts` | Headless renderer (scene JSON → PNG) used by Quick Look |
-| `App/Sources/ExcalidrawDocument.swift` | NSDocument: read/write, autosave, flush-before-save |
-| `App/Sources/EditorViewController.swift` | WKWebView host, bridge messages, export, downloads, file pickers |
-| `App/Sources/ExportPanel.swift` | Export save panel and its options |
-| `App/Sources/BundleSchemeHandler.swift` | Serves the bundled web code at `macdraw://app/` |
-| `App/Sources/MainMenu.swift` | Menus (File menu = standard NSDocument actions) |
-| `QuickLook/` | Thumbnail and Preview extensions + shared offscreen renderer |
-| `scripts/make-icon.swift` | Regenerates the app icon from `App/Icon/icon-source.webp` |
-| `project.yml` | XcodeGen spec, incl. the `.excalidraw` document type |
+## Credits
 
-## Bridge
-
-- Page → native (`webkit.messageHandlers.macdraw`): `ready`, `dirty`, `scene` (debounced JSON), `library`.
-- Native → page: `macdraw.load(scene, library)`, `macdraw.serialize()` (called before every save),
-  `exportInfo()`, `exportImage(opts)`, `undo()`, `redo()`.
-
-## Notes
-
-- The main app is not sandboxed; the Quick Look extensions are (required).
-- The shape library is stored in `~/Library/Application Support/MacDraw/library.excalidrawlib`.
-- Third-party licenses: [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+MacDraw is an independent project and isn't affiliated with Excalidraw. Excalidraw is © Excalidraw
+and released under the MIT License; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

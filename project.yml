@@ -45,6 +45,9 @@ targets:
         NSPrincipalClass: NSApplication
         NSSupportsAutomaticTermination: false
         NSSupportsSuddenTermination: false
+        CFBundleURLTypes:
+          - CFBundleURLName: MacDraw library links
+            CFBundleURLSchemes: [macdraw]
         CFBundleDocumentTypes:
           - CFBundleTypeName: Excalidraw Drawing
             CFBundleTypeRole: Editor
