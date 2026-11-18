@@ -1,0 +1,7 @@
+web/node_modules/
+web/dist/
+build/
+DerivedData/
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+.DS_Store
