@@ -27,6 +27,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.activate()
+        Updater.shared.start()   // Developer ID builds only
     }
 
     func applicationShouldOpenUntitledFile(_ sender: NSApplication) -> Bool { true }

@@ -24,6 +24,7 @@
 
 /* Begin PBXBuildFile section */
 		07DB5DF68E6122021801030E /* EditorViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F13055452FC76DE0E1BD6D3E /* EditorViewController.swift */; };
+		13DD6A24C66CEEF431052F05 /* Updater.swift in Sources */ = {isa = PBXBuildFile; fileRef = 614361F17AA9D82000E4E773 /* Updater.swift */; };
 		1C595F84A277E5B0047D2281 /* ThumbnailProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB80D77086CB89DF60E7A44A /* ThumbnailProvider.swift */; };
 		28AB96DF757ED33D2861E052 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 894BF569781431C4BB4FCEC3 /* Assets.xcassets */; };
 		41AE75111B42264E817918C1 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F595847D73825DCCC90EFE44 /* AppDelegate.swift */; };
@@ -106,6 +107,7 @@
 		44BCACEE41107B5D488EA140 /* QuickLookUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuickLookUI.framework; path = System/Library/Frameworks/QuickLookUI.framework; sourceTree = SDKROOT; };
 		5450B79721E14D9BF0854D5B /* MacDraw.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MacDraw.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		60551381205FD488D0EA7D69 /* LibraryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryStore.swift; sourceTree = "<group>"; };
+		614361F17AA9D82000E4E773 /* Updater.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Updater.swift; sourceTree = "<group>"; };
 		62FEAD308F2920E0B56F6C9E /* PreviewProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewProvider.swift; sourceTree = "<group>"; };
 		7698DCFACCFF7D9587CF643C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		7D44B290EDF612260C9BA6AA /* BundleSchemeHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BundleSchemeHandler.swift; sourceTree = "<group>"; };
@@ -159,6 +161,7 @@
 				CF8BE369B2ACFA5D79FA5423 /* LibraryImporter.swift */,
 				60551381205FD488D0EA7D69 /* LibraryStore.swift */,
 				DE6872BF56AE63EAE05EED5C /* MainMenu.swift */,
+				614361F17AA9D82000E4E773 /* Updater.swift */,
 			);
 			path = Sources;
 			sourceTree = "<group>";
@@ -480,6 +483,7 @@
 				7237A2D10928330629FAF84E /* LibraryImporter.swift in Sources */,
 				FABDFA3E4EDD76116CCB053D /* LibraryStore.swift in Sources */,
 				98D455E706194F2E7B5FDBEC /* MainMenu.swift in Sources */,
+				13DD6A24C66CEEF431052F05 /* Updater.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -526,7 +530,7 @@
 					"@executable_path/../Frameworks",
 					"@executable_path/../../../../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = local.macdraw.MacDraw.Preview;
+				PRODUCT_BUNDLE_IDENTIFIER = com.invignation.macdraw.Preview;
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
 			};
@@ -550,7 +554,7 @@
 					"@executable_path/../Frameworks",
 					"@executable_path/../../../../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = local.macdraw.MacDraw.Thumbnail;
+				PRODUCT_BUNDLE_IDENTIFIER = com.invignation.macdraw.Thumbnail;
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
 			};
@@ -620,7 +624,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 0.1.0;
+				MARKETING_VERSION = 0.2.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -644,8 +648,8 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 0.1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = local.macdraw.MacDraw;
+				MARKETING_VERSION = 0.2.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.invignation.macdraw;
 				PRODUCT_NAME = MacDraw;
 				SDKROOT = macosx;
 			};
@@ -663,7 +667,7 @@
 					"@executable_path/../Frameworks",
 					"@executable_path/../../../../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = local.macdraw.MacDraw.Thumbnail;
+				PRODUCT_BUNDLE_IDENTIFIER = com.invignation.macdraw.Thumbnail;
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
 			};
@@ -708,7 +712,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				ENABLE_HARDENED_RUNTIME = NO;
+				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
@@ -721,7 +725,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 0.1.0;
+				MARKETING_VERSION = 0.2.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -744,7 +748,7 @@
 					"@executable_path/../Frameworks",
 					"@executable_path/../../../../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = local.macdraw.MacDraw.Preview;
+				PRODUCT_BUNDLE_IDENTIFIER = com.invignation.macdraw.Preview;
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
 			};
@@ -762,8 +766,8 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 0.1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = local.macdraw.MacDraw;
+				MARKETING_VERSION = 0.2.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.invignation.macdraw;
 				PRODUCT_NAME = MacDraw;
 				SDKROOT = macosx;
 			};

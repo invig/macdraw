@@ -11,6 +11,8 @@ enum MainMenu {
         // App
         let app = submenu(in: main, title: appName)
         app.addItem(withTitle: "About \(appName)", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
+        app.addItem(withTitle: "Check for Updates…", action: #selector(Updater.checkForUpdates(_:)), keyEquivalent: "").target = Updater.shared
+        app.addItem(withTitle: "Check for Updates Automatically", action: #selector(Updater.toggleAutomatic(_:)), keyEquivalent: "").target = Updater.shared
         app.addItem(.separator())
         let services = NSMenu()
         app.addItem(withTitle: "Services", action: nil, keyEquivalent: "").submenu = services

@@ -1,6 +1,6 @@
 name: MacDraw
 options:
-  bundleIdPrefix: local.macdraw
+  bundleIdPrefix: com.invignation
   deploymentTarget:
     macOS: "14.0"
   createIntermediateGroups: true
@@ -8,13 +8,18 @@ settings:
   base:
     SWIFT_VERSION: "5.0"
     MACOSX_DEPLOYMENT_TARGET: "14.0"
-    MARKETING_VERSION: "0.1.0"
+    MARKETING_VERSION: "0.2.0"
     CURRENT_PROJECT_VERSION: "1"
     CODE_SIGN_IDENTITY: "-"
     CODE_SIGN_STYLE: Manual
     ENABLE_HARDENED_RUNTIME: NO
     ENABLE_USER_SCRIPT_SANDBOXING: NO
     DEAD_CODE_STRIPPING: YES
+  configs:
+    # Release builds are signed with a Developer ID and notarised by scripts/release.sh;
+    # Debug stays ad-hoc so it builds anywhere without certificates.
+    Release:
+      ENABLE_HARDENED_RUNTIME: YES
 targets:
   MacDraw:
     type: application
@@ -26,9 +31,9 @@ targets:
         buildPhase: resources
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: local.macdraw.MacDraw
+        PRODUCT_BUNDLE_IDENTIFIER: com.invignation.macdraw
         PRODUCT_NAME: MacDraw
-        MARKETING_VERSION: "0.1.0"
+        MARKETING_VERSION: "0.2.0"
         CURRENT_PROJECT_VERSION: "1"
         GENERATE_INFOPLIST_FILE: NO
         INFOPLIST_FILE: App/Info.plist
@@ -84,7 +89,7 @@ targets:
       - sdk: WebKit.framework
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: local.macdraw.MacDraw.Thumbnail
+        PRODUCT_BUNDLE_IDENTIFIER: com.invignation.macdraw.Thumbnail
         GENERATE_INFOPLIST_FILE: NO
         INFOPLIST_FILE: QuickLook/Thumbnail/Info.plist
         SKIP_INSTALL: YES
@@ -125,7 +130,7 @@ targets:
       - sdk: WebKit.framework
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: local.macdraw.MacDraw.Preview
+        PRODUCT_BUNDLE_IDENTIFIER: com.invignation.macdraw.Preview
         GENERATE_INFOPLIST_FILE: NO
         INFOPLIST_FILE: QuickLook/Preview/Info.plist
         SKIP_INSTALL: YES

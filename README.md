@@ -18,7 +18,8 @@ No account, no browser, works offline.
 ## Install
 
 Download the latest `MacDraw-<version>.zip` from [Releases](https://github.com/invig/macdraw/releases),
-unzip it and drag **MacDraw** to Applications.
+unzip it and drag **MacDraw** to Applications. It's signed and notarised by Apple, and keeps itself up
+to date: it checks GitHub once a day and asks before installing (MacDraw › Check for Updates…).
 
 If Quick Look doesn't show your drawings, turn on **MacDraw Thumbnails** and **MacDraw Preview** in
 System Settings → General → Login Items & Extensions → Quick Look.
@@ -32,7 +33,11 @@ xcodegen generate
 open MacDraw.xcodeproj
 ```
 
-Then press ⌘R. To make a release zip, run `scripts/release.sh`.
+Then press ⌘R. Debug builds are signed ad hoc and never update themselves.
+
+`scripts/release.sh` builds a universal release signed with a Developer ID, notarises it and
+publishes it as a GitHub release, which is also what the built-in updater reads. See the top of
+the script for the one-time setup; `DRY_RUN=1` builds and signs without notarising or publishing.
 
 ## How it works
 
