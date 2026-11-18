@@ -2,8 +2,7 @@ import AppKit
 
 /// Handles the links libraries.excalidraw.com sends back after "Add to Excalidraw":
 ///   macdraw://app/index.html#addLibrary=<library URL>&token=<token>
-/// Fetches the library and hands it to the frontmost editor, where Excalidraw asks
-/// before adding anything.
+/// Fetches the library and hands it to the frontmost editor, which asks before adding it.
 enum LibraryImporter {
     private static let maxBytes = 25 * 1024 * 1024
 
@@ -23,7 +22,8 @@ enum LibraryImporter {
         Task { @MainActor in
             do {
                 let json = try await fetchLibrary(libraryURL)
-                targetEditor()?.importLibrary(json)
+                let name = libraryURL.deletingPathExtension().lastPathComponent.replacingOccurrences(of: "-", with: " ")
+                targetEditor()?.importLibrary(json, name: name)
             } catch {
                 showError("Couldn't download the library.\n\n\(error.localizedDescription)")
             }

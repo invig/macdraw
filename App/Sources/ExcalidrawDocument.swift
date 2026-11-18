@@ -42,23 +42,47 @@ final class ExcalidrawDocument: NSDocument {
         Data((sceneJSON ?? Self.emptyScene).utf8)
     }
 
-    /// Every save (Cmd-S, autosave, Save As, close, quit) funnels through here. Pull the
-    /// freshest scene from the editor first, so nothing drawn in the last instant is lost.
-    override func save(to url: URL, ofType typeName: String, for saveOperation: NSDocument.SaveOperationType,
-                       completionHandler: @escaping (Error?) -> Void) {
-        guard let editor, editor.isReady else {
-            super.save(to: url, ofType: typeName, for: saveOperation, completionHandler: completionHandler)
-            return
+    // Saving itself never waits on the web page: AppKit can block the main thread waiting
+    // for a save in progress (closing, quitting), and the page's reply needs the main thread,
+    // so that would deadlock. Saves write `sceneJSON`, which the page keeps current (400 ms
+    // after each edit); the entry points below pull the very latest scene first.
+
+    /// Pulls the latest scene from the editor, giving up after `timeout` (page busy or stuck).
+    func flushFromEditor(timeout: TimeInterval = 1.5, then done: @escaping () -> Void) {
+        guard let editor, editor.isReady else { return done() }
+        var finished = false
+        let finish = {
+            guard !finished else { return }
+            finished = true
+            done()
         }
-        editor.serialize { json in
-            if let json, !json.isEmpty { self.sceneJSON = json }
-            self.performSave(to: url, ofType: typeName, for: saveOperation, completionHandler: completionHandler)
+        editor.serialize { [weak self] json in
+            if !finished, let json, !json.isEmpty { self?.sceneJSON = json }
+            finish()
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + timeout) {
+            if !finished { NSLog("MacDraw: editor didn't answer in time; saving the last known scene") }
+            finish()
         }
     }
 
-    private func performSave(to url: URL, ofType typeName: String, for saveOperation: NSDocument.SaveOperationType,
-                             completionHandler: @escaping (Error?) -> Void) {
-        super.save(to: url, ofType: typeName, for: saveOperation, completionHandler: completionHandler)
+    override func save(_ sender: Any?) {
+        flushFromEditor { super.save(sender) }
+    }
+
+    override func saveAs(_ sender: Any?) {
+        flushFromEditor { super.saveAs(sender) }
+    }
+
+    override func duplicate(_ sender: Any?) {
+        flushFromEditor { super.duplicate(sender) }
+    }
+
+    override func canClose(withDelegate delegate: Any, shouldClose shouldCloseSelector: Selector?,
+                           contextInfo: UnsafeMutableRawPointer?) {
+        flushFromEditor {
+            super.canClose(withDelegate: delegate, shouldClose: shouldCloseSelector, contextInfo: contextInfo)
+        }
     }
 
     // MARK: Called by the editor

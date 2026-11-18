@@ -33,8 +33,8 @@ declare global {
       exportInfo: () => { isEmpty: boolean; hasSelection: boolean };
       /** File > Export: PNG comes back base64-encoded, SVG as text. */
       exportImage: (opts: ExportOptions) => Promise<string>;
-      /** "Add to Excalidraw" from libraries.excalidraw.com: merge a fetched .excalidrawlib (asks first). */
-      importLibrary: (libraryJSON: string) => Promise<"added" | "cancelled">;
+      /** "Add to Excalidraw" from libraries.excalidraw.com: merge a fetched .excalidrawlib (native asked first). */
+      importLibrary: (libraryJSON: string) => Promise<void>;
       /** Another window changed the shared library: replace ours without echoing it back. */
       setLibrary: (libraryJSON: string) => Promise<void>;
       /** Native menu Undo/Redo. */
@@ -171,19 +171,14 @@ export default function App() {
       importLibrary: async (libraryJSON) => {
         const api = apiRef.current;
         if (!api) throw new Error("Editor not ready");
-        try {
-          await api.updateLibrary({
-            libraryItems: new Blob([libraryJSON], { type: "application/vnd.excalidrawlib+json" }),
-            merge: true,
-            prompt: true,
-            openLibraryMenu: true,
-            defaultStatus: "published",
-          });
-          return "added";
-        } catch (e) {
-          if ((e as { name?: string } | null)?.name === "AbortError") return "cancelled";  // user said no
-          throw e;
-        }
+        // No `prompt: true`: that uses window.confirm, which blocks the page (and any save
+        // waiting on it) until answered. Native shows its own sheet before calling this.
+        await api.updateLibrary({
+          libraryItems: new Blob([libraryJSON], { type: "application/vnd.excalidrawlib+json" }),
+          merge: true,
+          openLibraryMenu: true,
+          defaultStatus: "published",
+        });
       },
       setLibrary: async (libraryJSON) => {
         const api = apiRef.current;

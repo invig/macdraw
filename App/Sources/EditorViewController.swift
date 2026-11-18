@@ -8,7 +8,7 @@ final class EditorViewController: NSViewController {
     /// True once the page has received the document contents.
     private(set) var isReady = false
     /// Libraries to import once the page is ready (a link can arrive before the editor loads).
-    private var pendingLibraryImports: [String] = []
+    private var pendingLibraryImports: [(json: String, name: String)] = []
 
     static let libraryDidChange = Notification.Name("MacDrawLibraryDidChange")
 
@@ -60,21 +60,32 @@ final class EditorViewController: NSViewController {
             self.isReady = true
             let pending = self.pendingLibraryImports
             self.pendingLibraryImports.removeAll()
-            pending.forEach(self.importLibrary)
+            pending.forEach { self.importLibrary($0.json, name: $0.name) }
         }
     }
 
-    /// Merges a downloaded .excalidrawlib into the library; Excalidraw asks the user first.
-    func importLibrary(_ json: String) {
-        guard isReady else { return pendingLibraryImports.append(json) }
-        webView.callAsyncJavaScript("return await window.macdraw.importLibrary(json)", arguments: ["json": json],
-                                    in: nil, in: .page) { [weak self] result in
-            guard case .failure(let error) = result, let self else { return }
-            NSLog("MacDraw: library import failed: \(error)")
-            let alert = NSAlert()
-            alert.messageText = "Couldn't add the library"
-            alert.informativeText = error.localizedDescription
-            if let window = self.view.window { alert.beginSheetModal(for: window) } else { alert.runModal() }
+    /// Merges a downloaded .excalidrawlib into the library after asking. The question is a
+    /// native sheet: Excalidraw's own prompt uses window.confirm, which freezes the page.
+    func importLibrary(_ json: String, name: String) {
+        guard isReady, let window = view.window else { return pendingLibraryImports.append((json, name)) }
+        let object = (try? JSONSerialization.jsonObject(with: Data(json.utf8))) as? [String: Any]
+        let count = ((object?["libraryItems"] ?? object?["library"]) as? [Any])?.count ?? 0
+        let alert = NSAlert()
+        alert.messageText = count == 1 ? "Add 1 item to your library?" : "Add \(count) items to your library?"
+        alert.informativeText = "From “\(name)” on libraries.excalidraw.com."
+        alert.addButton(withTitle: "Add")
+        alert.addButton(withTitle: "Cancel")
+        alert.beginSheetModal(for: window) { [weak self] response in
+            guard response == .alertFirstButtonReturn, let self else { return }
+            self.webView.callAsyncJavaScript("await window.macdraw.importLibrary(json)", arguments: ["json": json],
+                                             in: nil, in: .page) { [weak self] result in
+                guard case .failure(let error) = result, let self else { return }
+                NSLog("MacDraw: library import failed: \(error)")
+                let alert = NSAlert()
+                alert.messageText = "Couldn't add the library"
+                alert.informativeText = error.localizedDescription
+                if let window = self.view.window { alert.beginSheetModal(for: window) } else { alert.runModal() }
+            }
         }
     }
 
