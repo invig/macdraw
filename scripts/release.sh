@@ -52,8 +52,9 @@ xcodebuild -project MacDraw.xcodeproj -scheme MacDraw -configuration Release \
 echo "==> Checking the signature"
 codesign --verify --deep --strict --verbose=2 "$APP"
 for code in "$APP" "$APP"/Contents/PlugIns/*.appex; do
-  flags=$(codesign -dv "$code" 2>&1 | awk -F'[()]' '/^CodeDirectory/{print $2}')
-  authority=$(codesign -dvv "$code" 2>&1 | awk -F= '/^Authority/{print $2; exit}')
+  info=$(codesign -dvv "$code" 2>&1)
+  flags=$(awk -F'[()]' '/^CodeDirectory/{print $2}' <<< "$info")
+  authority=$(awk -F= '/^Authority/ && !seen++ {print $2}' <<< "$info")
   echo "    ${code:t}: $authority, flags $flags"
   [[ "$flags" == *runtime* ]] || { echo "${code:t} isn't signed with the hardened runtime" >&2; exit 1; }
 done
