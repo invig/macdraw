@@ -187,7 +187,13 @@ extension EditorViewController: NSMenuItemValidation {
 
 extension EditorViewController: WKScriptMessageHandler {
     func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {
-        guard let body = message.body as? [String: Any], let type = body["type"] as? String else { return }
+        // WebKit installs the handler in every frame, including script-enabled iframes from a
+        // drawing. Read the sender and payload once, and act only on messages the main frame
+        // posted from the bundled editor page.
+        let frame = message.frameInfo
+        let payload = message.body
+        guard Self.isEditorPage(frame) else { return }
+        guard let body = payload as? [String: Any], let type = body["type"] as? String else { return }
         switch type {
         case "ready":
             isReady = false
@@ -205,6 +211,13 @@ extension EditorViewController: WKScriptMessageHandler {
         default:
             break
         }
+    }
+
+    private static func isEditorPage(_ frame: WKFrameInfo) -> Bool {
+        guard frame.isMainFrame, let url = frame.request.url,
+              var components = URLComponents(url: url, resolvingAgainstBaseURL: false) else { return false }
+        components.fragment = nil
+        return components.url == BundleSchemeHandler.startURL
     }
 }
 
