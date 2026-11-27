@@ -19,6 +19,12 @@ import type {
   LibraryItems,
 } from "@excalidraw/excalidraw/types";
 import { isNative, post } from "./bridge";
+import {
+  elementsWithoutGeneratedHtml,
+  libraryItemsWithoutGeneratedHtml,
+  libraryWithoutGeneratedHtml,
+  sanitizedDropFile,
+} from "./sanitize";
 
 type Elements = Parameters<typeof serializeAsJSON>[0];
 
@@ -75,6 +81,41 @@ function sendKey(key: string, shift: boolean) {
   document.dispatchEvent(ev);
 }
 
+const resentDrops = new WeakSet<Event>();
+
+// Excalidraw loads a dropped scene straight into the canvas with no hook to filter it, so
+// hold the drop, sanitize the file, and re-send the drop carrying only the sanitized file.
+function onDropCapture(event: DragEvent) {
+  if (resentDrops.has(event)) return;
+  const transfer = event.dataTransfer;
+  const file = transfer?.files.item(0);
+  if (!transfer || !file) return;
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  const target = event.target ?? document;
+  // Drag data is only readable while the original event is being dispatched.
+  const strings = transfer.types.filter((type) => type !== "Files").map((type) => [type, transfer.getData(type)] as const);
+  const init = {
+    bubbles: true,
+    cancelable: true,
+    clientX: event.clientX,
+    clientY: event.clientY,
+    screenX: event.screenX,
+    screenY: event.screenY,
+  };
+  sanitizedDropFile(file).then(
+    (clean) => {
+      const next = new DataTransfer();
+      next.items.add(clean);
+      for (const [type, data] of strings) next.setData(type, data);
+      const resent = new DragEvent("drop", { ...init, dataTransfer: next });
+      resentDrops.add(resent);
+      target.dispatchEvent(resent);
+    },
+    (e) => post({ type: "log", message: `Failed to read dropped file: ${String(e)}` }),
+  );
+}
+
 export default function App() {
   // `gen` remounts the editor when native reloads the document (Revert, Versions).
   const [scene, setScene] = useState<{ data: ExcalidrawInitialDataState; gen: number } | null>(null);
@@ -101,7 +142,7 @@ export default function App() {
             const parsed = JSON.parse(sceneJSON);
             const restored = restore(parsed, null, null, { repairBindings: true });
             data = {
-              elements: restored.elements,
+              elements: elementsWithoutGeneratedHtml(restored.elements),
               appState: { ...restored.appState },
               files: restored.files,
             };
@@ -114,7 +155,9 @@ export default function App() {
         if (libraryJSON) {
           try {
             const lib = JSON.parse(libraryJSON);
-            data.libraryItems = restoreLibraryItems(lib.libraryItems ?? lib.library ?? [], "unpublished");
+            data.libraryItems = libraryItemsWithoutGeneratedHtml(
+              restoreLibraryItems(lib.libraryItems ?? lib.library ?? [], "unpublished"),
+            );
           } catch (e) {
             post({ type: "log", message: `Failed to parse library: ${String(e)}` });
           }
@@ -173,8 +216,9 @@ export default function App() {
         if (!api) throw new Error("Editor not ready");
         // No `prompt: true`: that uses window.confirm, which blocks the page (and any save
         // waiting on it) until answered. Native shows its own sheet before calling this.
+        const sanitized = JSON.stringify(libraryWithoutGeneratedHtml(JSON.parse(libraryJSON)));
         await api.updateLibrary({
-          libraryItems: new Blob([libraryJSON], { type: "application/vnd.excalidrawlib+json" }),
+          libraryItems: new Blob([sanitized], { type: "application/vnd.excalidrawlib+json" }),
           merge: true,
           openLibraryMenu: true,
           defaultStatus: "published",
@@ -187,7 +231,9 @@ export default function App() {
         applyingRemoteLibrary.current = true;
         try {
           await api.updateLibrary({
-            libraryItems: restoreLibraryItems(lib.libraryItems ?? lib.library ?? [], "unpublished"),
+            libraryItems: libraryItemsWithoutGeneratedHtml(
+              restoreLibraryItems(lib.libraryItems ?? lib.library ?? [], "unpublished"),
+            ),
             merge: false,
           });
         } finally {
@@ -197,9 +243,11 @@ export default function App() {
       undo: () => editingText() ? document.execCommand("undo") : sendKey("z", false),
       redo: () => editingText() ? document.execCommand("redo") : sendKey("z", true),
     };
+    window.addEventListener("drop", onDropCapture, true);
     post({ type: "ready" });
     // Running in a plain browser (npm run dev): start with an empty scene.
     if (!isNative()) window.macdraw.load(null, null);
+    return () => window.removeEventListener("drop", onDropCapture, true);
   }, []);
 
   const onChange = (elements: Elements, appState: AppState, files: BinaryFiles) => {
@@ -257,6 +305,8 @@ export default function App() {
           }, 0);
         }}
         onChange={onChange}
+        // Paste and library inserts pass through here before reaching the scene.
+        onDuplicate={(nextElements) => elementsWithoutGeneratedHtml(nextElements)}
         onLibraryChange={onLibraryChange}
         UIOptions={uiOptions}
         autoFocus
