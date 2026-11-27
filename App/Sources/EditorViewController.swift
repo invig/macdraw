@@ -215,14 +215,26 @@ extension EditorViewController: WKNavigationDelegate, WKUIDelegate, WKDownloadDe
                  decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
         if action.shouldPerformDownload { return decisionHandler(.download) }
         guard let url = action.request.url else { return decisionHandler(.cancel) }
-        switch url.scheme {
+        switch url.scheme?.lowercased() {
         case BundleSchemeHandler.scheme, "blob", "data", "about":
-            decisionHandler(.allow)
+            // Embedded frames (which may run a drawing's HTML) must not replace the editor page.
+            let replacesEditor = action.targetFrame?.isMainFrame ?? true
+            decisionHandler(replacesEditor && !action.sourceFrame.isMainFrame ? .cancel : .allow)
         default:
-            // Links in drawings, "Browse libraries", help: open in the default browser.
-            NSWorkspace.shared.open(url)
+            // Links in drawings, "Browse libraries", help: open in the default browser, but only
+            // when the user clicked them in the editor itself, never from an embedded frame or script.
+            if Self.isUserLinkClick(action, inNewWindow: false, url: url) { NSWorkspace.shared.open(url) }
             decisionHandler(.cancel)
         }
+    }
+
+    /// True for a click on an http(s) link in the editor page. Embedded frames, script navigations,
+    /// form submissions and other schemes (smb:, file:, custom handlers…) are never handed to the system.
+    private static func isUserLinkClick(_ action: WKNavigationAction, inNewWindow: Bool, url: URL) -> Bool {
+        guard action.navigationType == .linkActivated, action.sourceFrame.isMainFrame else { return false }
+        if inNewWindow ? action.targetFrame != nil : action.targetFrame?.isMainFrame != true { return false }
+        let scheme = url.scheme?.lowercased()
+        return scheme == "https" || scheme == "http"
     }
 
     func webView(_ webView: WKWebView, decidePolicyFor response: WKNavigationResponse,
@@ -276,10 +288,12 @@ extension EditorViewController: WKNavigationDelegate, WKUIDelegate, WKDownloadDe
         else { finish(panel.runModal()) }
     }
 
-    /// window.open / target=_blank -> default browser.
+    /// target=_blank links clicked in the editor -> default browser. window.open is never followed.
     func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration,
                  for action: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
-        if let url = action.request.url { NSWorkspace.shared.open(url) }
+        if let url = action.request.url, Self.isUserLinkClick(action, inNewWindow: true, url: url) {
+            NSWorkspace.shared.open(url)
+        }
         return nil
     }
 
