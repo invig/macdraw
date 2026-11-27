@@ -8,7 +8,7 @@ final class EditorViewController: NSViewController {
     /// True once the page has received the document contents.
     private(set) var isReady = false
     /// Libraries to import once the page is ready (a link can arrive before the editor loads).
-    private var pendingLibraryImports: [(json: String, name: String)] = []
+    private var pendingLibraryImports: [(json: String, name: String, host: String)] = []
 
     static let libraryDidChange = Notification.Name("MacDrawLibraryDidChange")
 
@@ -60,19 +60,20 @@ final class EditorViewController: NSViewController {
             self.isReady = true
             let pending = self.pendingLibraryImports
             self.pendingLibraryImports.removeAll()
-            pending.forEach { self.importLibrary($0.json, name: $0.name) }
+            pending.forEach { self.importLibrary($0.json, name: $0.name, host: $0.host) }
         }
     }
 
     /// Merges a downloaded .excalidrawlib into the library after asking. The question is a
     /// native sheet: Excalidraw's own prompt uses window.confirm, which freezes the page.
-    func importLibrary(_ json: String, name: String) {
-        guard isReady, let window = view.window else { return pendingLibraryImports.append((json, name)) }
+    /// `host` is the server the library was downloaded from.
+    func importLibrary(_ json: String, name: String, host: String) {
+        guard isReady, let window = view.window else { return pendingLibraryImports.append((json, name, host)) }
         let object = (try? JSONSerialization.jsonObject(with: Data(json.utf8))) as? [String: Any]
         let count = ((object?["libraryItems"] ?? object?["library"]) as? [Any])?.count ?? 0
         let alert = NSAlert()
         alert.messageText = count == 1 ? "Add 1 item to your library?" : "Add \(count) items to your library?"
-        alert.informativeText = "From “\(name)” on libraries.excalidraw.com."
+        alert.informativeText = "From “\(name)” on \(host)."
         alert.addButton(withTitle: "Add")
         alert.addButton(withTitle: "Cancel")
         alert.beginSheetModal(for: window) { [weak self] response in
@@ -220,7 +221,7 @@ extension EditorViewController: WKNavigationDelegate, WKUIDelegate, WKDownloadDe
             decisionHandler(.allow)
         default:
             // Links in drawings, "Browse libraries", help: open in the default browser.
-            NSWorkspace.shared.open(url)
+            NSWorkspace.shared.open(LibraryImporter.libraryBrowserURL(url))
             decisionHandler(.cancel)
         }
     }
@@ -279,7 +280,7 @@ extension EditorViewController: WKNavigationDelegate, WKUIDelegate, WKDownloadDe
     /// window.open / target=_blank -> default browser.
     func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration,
                  for action: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
-        if let url = action.request.url { NSWorkspace.shared.open(url) }
+        if let url = action.request.url { NSWorkspace.shared.open(LibraryImporter.libraryBrowserURL(url)) }
         return nil
     }
 
