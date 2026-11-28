@@ -2,6 +2,8 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <!-- Images in a drawing must never be fetched from the network. -->
+    <meta http-equiv="Content-Security-Policy" content="img-src 'self' data: blob: macdraw:" />
     <title>MacDraw renderer</title>
   </head>
   <body>

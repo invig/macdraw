@@ -1,6 +1,7 @@
 // Headless renderer for the Quick Look thumbnail and preview extensions.
 // Native calls window.macdrawRender(sceneJSON, maxSize) and gets back a base64 PNG.
 import { exportToBlob, getNonDeletedElements, restore } from "@excalidraw/excalidraw";
+import { inlineImageFiles } from "./files";
 
 (window as unknown as { EXCALIDRAW_ASSET_PATH: string }).EXCALIDRAW_ASSET_PATH = window.location.origin + "/";
 
@@ -10,7 +11,7 @@ async function render(sceneJSON: string, maxSize: number): Promise<string | null
   if (elements.length === 0) return null;
   const blob = await exportToBlob({
     elements,
-    files: scene.files,
+    files: inlineImageFiles(scene.files),
     appState: {
       ...scene.appState,
       exportBackground: true,
