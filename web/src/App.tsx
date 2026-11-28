@@ -19,6 +19,7 @@ import type {
   LibraryItems,
 } from "@excalidraw/excalidraw/types";
 import { isNative, post } from "./bridge";
+import { inlineImageFiles } from "./files";
 
 type Elements = Parameters<typeof serializeAsJSON>[0];
 
@@ -89,7 +90,7 @@ export default function App() {
   const serialize = () => {
     const api = apiRef.current;
     if (!api) return "";
-    return serializeAsJSON(api.getSceneElementsIncludingDeleted(), api.getAppState(), api.getFiles(), "local");
+    return serializeAsJSON(api.getSceneElementsIncludingDeleted(), api.getAppState(), inlineImageFiles(api.getFiles()), "local");
   };
 
   useEffect(() => {
@@ -103,7 +104,7 @@ export default function App() {
             data = {
               elements: restored.elements,
               appState: { ...restored.appState },
-              files: restored.files,
+              files: inlineImageFiles(restored.files),
             };
           } catch (e) {
             post({ type: "log", message: `Failed to parse scene: ${String(e)}` });
@@ -149,7 +150,7 @@ export default function App() {
           exportWithDarkMode: opts.darkMode,
           exportScale: opts.scale,
         };
-        const files = api.getFiles();
+        const files = inlineImageFiles(api.getFiles());
         if (opts.format === "svg") {
           const svg = await exportToSvg({ elements, appState: exportState, files });
           return svg.outerHTML;
